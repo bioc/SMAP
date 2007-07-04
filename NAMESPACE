@@ -1,0 +1,31 @@
+useDynLib(SMAP)
+import(methods)
+importFrom(graphics, plot)
+
+exportClasses(SMAPObservations,
+              SMAPHMM,
+              SMAPProfile,
+              SMAPProfiles)
+
+exportMethods(name,
+              value,
+              noObservations,
+              chromosome,
+              startPosition,
+              endPosition,
+              reporterId,
+              A,
+              Pi,
+              Phi,
+              noStates,
+              HMM,
+              observations,
+              P,
+              Q,
+              smap,
+              initialize,
+              show,
+              plot)
+
+export(SMAPHMM,
+       SMAPObservations)

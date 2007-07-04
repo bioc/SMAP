@@ -1,0 +1,249 @@
+%\VignetteIndexEntry{SMAP}
+%\VignetteDepends{}
+%\VignetteKeywords{}
+%\VignettePackage{SMAP}
+
+\documentclass[10pt,a4paper]{article}
+
+\title{SMAP: A Segmental Maximum A Posteriori Approach to Array-CGH Copy Number
+  Profiling}
+\author{Robin Andersson, Jan Komorowski}
+
+\setlength{\oddsidemargin}{0.5cm} %margin
+\setlength{\evensidemargin}{0.5cm} %margin
+\setlength{\textwidth}{15.2cm}
+\addtolength\footskip{1cm}
+\pagestyle{plain}
+
+\usepackage{Sweave}
+\setkeys{Gin}{width=\textwidth}
+
+\usepackage{graphicx}
+
+\newcommand{\Robject}[1]{{\texttt{#1}}}
+\newcommand{\Rfunction}[1]{{\texttt{#1}}}
+\newcommand{\Rpackage}[1]{{\textit{#1}}}
+\newcommand{\Rclass}[1]{{\textit{#1}}}
+\newcommand{\Rmethod}[1]{{\textit{#1}}}
+\newcommand{\Rfunarg}[1]{{\textit{#1}}}
+
+\SweaveOpts{prefix.string=figs/fig}
+
+\begin{document}
+
+\maketitle
+
+\begin{center}
+The Linnaeus Centre for Bioinformatics,\\
+Uppsala University, Uppsala, Sweden
+\end{center}
+
+\begin{center}
+{\tt robin.andersson@lcb.uu.se}
+\end{center}
+
+\tableofcontents
+
+\section{Overview}
+This document describes classes and functions in the \Rpackage{SMAP} package
+for copy number profiling of array-CGH data. The data analyzed is glioblastoma
+multiforme sample \emph{G24460} obtained from Teresita Diaz de St{\aa}hl,
+Uppsala University, Sweden.
+
+<<>>=
+library(SMAP)
+@
+
+\section{Observations}
+
+The glioblastoma multiforme data is stored in a \Rclass{data.frame} which needs
+to be converted to a \Rclass{SMAPObservations} object prior to analysis. The
+required arguments for the \Rfunction{SMAPObservations} constructor function
+are:
+\begin{description}
+\item[\Rfunarg{value}] A numeric vector of intensity ratios for each clone on the
+  array
+\item[\Rfunarg{chromosome}] A character vector of chromosomes annotated to the
+  clones on the array
+\item[\Rfunarg{startPosition}] A numeric vector of start positions (bp) of the
+  sequences corresponding to the clones on the array
+\item[\Rfunarg{endPosition}] A numeric vector of end positions (bp) of the
+  sequences corresponding to the clones on the array
+\end{description}
+Optional data are:
+\begin{description}
+\item[\Rfunarg{name}] The name (identifier) of the array
+\item[\Rfunarg{reporterId}] Identifiers of the clones on the array
+\end{description}
+
+<<>>=
+data(GBM)
+obs <- SMAPObservations(value=as.numeric(GBM[,2]),
+                        chromosome=as.character(GBM[,3]),
+                        startPosition=as.numeric(GBM[,4]),
+                        endPosition=as.numeric(GBM[,5]),
+                        name="G24460",
+                        reporterId=as.character(GBM[,1]))
+@
+
+The observations can be visualized by using the generic \Rfunction{plot} function
+on the \Rclass{SMAPObservations} object. If multiple chromosomes are present, the
+chromosomes are separated by vertical dashed lines and indexed on the horizontal axis.
+
+<<fig=TRUE>>=
+plot(obs, ylab="ratio", ylim=c(0,2))
+@
+
+Subsets of observations may also be plotted using general subscripts.
+For instance, chromosome 9 may be plotted in the following manner:
+
+<<fig=TRUE>>=
+ids <- which(chromosome(obs) == "9")
+plot(obs[ids], ylab="ratio", ylim=c(0,2),
+main=paste(name(obs), "chromosome 9"))
+@
+
+The observations plotted in this example has been normalized using the
+\Rfunction{normalizeWithinArrays} function in the \Rpackage{limma} package.
+
+\section{A Hidden Markov Model for copy number assignments}
+
+\Rpackage{SMAP} uses a Hidden Markov Model (HMM) to model the copy number
+assignments. We recommend using a six state model describing states corresponding
+to homozygous and heterozygous deletions, normal, one copy gain, two copy gain,
+and amplification. A \Rclass{SMAPHMM} class is used in the \Rpackage{SMAP}
+package to manage HMMs and initiated using the \Rfunction{SMAPHMM} function.
+The required arguments to \Rfunction{SMAPHMM} are:
+\begin{description}
+\item[\Rfunarg{noStates}] The number of hidden states in the HMM
+\item[\Rfunarg{Phi}] A \Rfunarg{noStates} * 2 matrix of Gaussian distributions
+  associated with each hidden state, the first column described means and the
+  second described standard deviations
+\end{description}
+Optional arguments to \Rfunction{SMAPHMM} are:
+\begin{description}
+\item[\Rfunarg{A}] A \Rfunarg{noStates} * \Rfunarg{noStates} transition
+  probability matrix (probabilities of moving between states in the HMM)
+\item[\Rfunarg{Pi}] A numeric vector of initial probabilities (probabilities
+  of starting in each state)
+\item[\Rfunarg{initTrans}] The probability of changing state in the HMM (used if
+  \Rfunarg{A} is \emph{NULL}), defaults to $0.2/(noStates-1)$ which means the
+  probability of staying in the same state is 0.8
+\end{description}
+
+Initiate a \Rclass{SMAPHMM} Hidden Markov Model object with 6 states:
+
+<<>>=
+init.means <- c(0.4, 0.7, 1, 1.3, 1.6, 3)
+init.sds <- rep(0.1, 6)
+phi <- cbind(init.means, init.sds)
+hmm <- SMAPHMM(noStates=6, Phi=phi, initTrans=0.02)
+hmm
+@
+
+\section{Copy number profiling by segmental a posteriori maximization}
+
+Given a set of observations \Rfunarg{O} and a HMM $\lambda$,
+the \Rfunction{smap} function finds the most probable state sequence \emph{Q}
+(assignment of clones to HMM states) in the HMM
+by maximizing the joint posterior probability of $Q$ and $\lambda$ given $O$.
+This is done by, starting with an initial estimate of the HMM, alternating
+optimization of the joint posterior probability over $Q$ and $\lambda$ until
+no further improvements can be made or a maximum number of iterations has been
+reached. Optimization over $Q$ and $\lambda$ is done using the Viterbi algorithm
+and a gradient descent scheme with individual learning rate adaptation,
+respectively.
+
+The \Rfunction{smap} function requires the following arguments:
+\begin{description}
+\item[\Rfunarg{x}] A \Rclass{SMAPHMM} object
+\item[\Rfunarg{Obs}] A \Rclass{SMAPObservations} object
+\end{description}
+Other arguments (default values) are:
+\begin{description}
+\item[\Rfunarg{eta} (0.005)] Initial learning rate in the gradient descent
+  optimization
+\item[\Rfunarg{overlap} (TRUE)] If \emph{TRUE}, genomic overlap of clones is
+  considered in the optimization
+\item[\Rfunarg{distance} (TRUE)] If \emph{TRUE}, genomic distance between clones
+  is considered	in the optimization, in terms of distance based transition probabilities
+\item[\Rfunarg{chrom.wise} (FALSE)] If \emph{TRUE}, the observations are analyzed
+  chromosome-wise rather than genome-wise
+\item[\Rfunarg{verbose} (1)] Specifies the amount of output produced; 0 means no
+  information and 3 a lot of information
+\item[\Rfunarg{L} (5000000)] A positive length parameter that controls the
+  convergence of distance based transition probabilities
+  towards 1 / \Rfunarg{noStates(x)}
+\end{description}
+All arguments are described in detail in the man pages for \Rfunction{smap}.
+
+The choice of parameters sent to the \Rfunction{smap} function as well as the
+initial HMM used may influence the results. A too high or too low value of
+\Rfunarg{eta} may reduce the ability to fit the HMM to the data. The
+initial estimates of changing state in the HMM may also influence the results.
+A too high value may find too much variation in the data whereas a too small
+value may restrain the ability of finding true variations in the data.
+If \Rfunarg{chrom.wise} is set to FALSE (recommended), one HMM is fit to
+all data which controls the adaptation of HMM parameters to local non-biological
+trends which may be present in some chromosome only. If set to TRUE, one HMM
+per chromosome is trained and the resulting state distributions may
+conflict between chromosomes.
+
+The \Rfunarg{overlap} argument specifies whether
+overlap should be taken into account during optimization. If set to TRUE, each
+observation is considered to be drawn from a mixture of distributions where
+the mixture proportions are determined in terms of relative overlap between
+clones.
+
+Run \Rfunction{smap} on the \Rclass{SMAPHMM} and \Rclass{SMAPObservations}
+objects.
+
+<<>>=
+    profile <- smap(hmm, obs, verbose=2)
+@
+
+The result of the \Rfunction{smap} run may be retrieved by accessing the
+\Rfunarg{Q} slot of the resulting \Rclass{SMAPProfile} object.
+
+<<results=hide>>=
+Q(profile)
+@
+
+The resulting (adapted) HMM may be examined by accessing the HMM slot of the
+\Rclass{SMAPProfile}.
+
+<<>>=
+Phi(HMM(profile))
+@
+
+\section{Plotting results}
+
+The results of the \Rfunction{smap} run may be visualized using the generic
+\Rfunction{plot} function.
+
+Plot results of all data:
+<<fig=TRUE>>=
+## Plot results of all data:
+plot(profile, ylab="ratio", ylim=c(0,2))
+@
+
+Plot chromosomes with aberrations
+<<fig=TRUE>>=
+## Plot chromosomes with aberrations:
+chrom.selection <- as.character(c(1, 6, 7, 8, 9, 10, 15, 19, 20))
+selection <- which(chromosome(obs) %in% chrom.selection)
+plot(profile[selection], ylab="ratio", ylim=c(0, 2))
+@
+
+Plot all chromosomes with aberrations separately:
+<<fig=TRUE>>=
+## Plot all chromosomes separately:
+par(mfrow=c(3, 3))
+for (c in chrom.selection) {
+    ids <- which(chromosome(obs) == c)
+    plot(profile[ids], ylab="ratio", ylim=c(0, 2), main=c)
+}
+@
+
+\end{document}
+
