@@ -3,11 +3,13 @@
 void viterbi(int *x_T, int *x_N, double *x_A, double *x_Pi, double *mu, double *sigma,
 			 double *obs, int *overlap, double *overlaps, int *overlap_ids, int *no_overlaps,
 			 int *start_overlaps, int *dist, int *L, int *distance, double *P, int *Q,
-			 double *mean_ref, double *sd_min, double *mean_sd, int *prior) {
+			 double *mean_ref, double *sd_min, double *mean_sd, int *prior,
+			 double *x_W_A, double *W_Pi) {
 		
 		int N = *x_N;
 		int T = *x_T;
 		double A[N][N];
+		double W_A[N][N];
 		double Pi[N];
 		
 		double delta[T][N];
@@ -20,6 +22,7 @@ void viterbi(int *x_T, int *x_N, double *x_A, double *x_Pi, double *mu, double *
 								A[i][j] = x_A[index];
 						else
 								A[i][j] = safe_log(x_A[index]);
+						W_A[i][j] = x_W_A[index];
 				}
 				Pi[i] = safe_log(x_Pi[i]);
 		}
@@ -134,9 +137,12 @@ void viterbi(int *x_T, int *x_N, double *x_A, double *x_Pi, double *mu, double *
 
 		// Calculate parameter prior probability
 		if (*prior) {
-				for (int i = 0; i < N; i++)
+				for (int i = 0; i < N; i++) {
+						*P += safe_log(Dirichlet(A[i], W_A[i], N));
 						*P += safe_log(*sd_min / sigma[i]) +
 								emission_prob(mu[i], mean_ref[i], *mean_sd, 1);
+				}
+				*P += safe_log(Dirichlet(Pi, W_Pi, N));
 		}
 		
 		// Path backtracking

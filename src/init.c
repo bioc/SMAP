@@ -5,7 +5,7 @@
 #include "viterbi.h"
 #include <R_ext/Rdynload.h>
 
-static R_NativePrimitiveArgType gradient_descent_t[35] = {
+static R_NativePrimitiveArgType gradient_descent_t[37] = {
 		INTSXP,  /* 		int *_T, */
 		INTSXP,  /* 		int *_N, */
 		REALSXP, /* 		double *Pi, */
@@ -40,10 +40,12 @@ static R_NativePrimitiveArgType gradient_descent_t[35] = {
 		REALSXP, /* 		double *e_min, */
 		REALSXP, /* 		double *e_max, */
 		INTSXP,  /* 		int *adaptive, */
-		INTSXP   /* 		int *verbose */
+		INTSXP,  /* 		int *verbose */
+		REALSXP, /* 		double *W_A, */
+		REALSXP  /* 		double *W_Pi */
 };
 
-static R_NativePrimitiveArgType viterbi_t[21] = {
+static R_NativePrimitiveArgType viterbi_t[23] = {
 		INTSXP,  /* 		int *_T, */
 		INTSXP,  /* 		int *_N, */
 		REALSXP, /* 		double *_A, */
@@ -64,12 +66,14 @@ static R_NativePrimitiveArgType viterbi_t[21] = {
 		REALSXP, /* 		double *mean_ref, */
 		REALSXP, /* 		double *sd_min, */
 		REALSXP, /* 		double *mean_sd, */
-		INTSXP   /* 		int *prior */
+		INTSXP,  /* 		int *prior */
+		REALSXP, /* 		double *W_A, */
+		REALSXP  /* 		double *W_Pi */
 };
 
 static const R_CMethodDef CEntries[]  = {
-		{"gradient_descent", (DL_FUNC) &gradient_descent, 35, gradient_descent_t},
-		{"viterbi", (DL_FUNC) &viterbi, 21, viterbi_t},
+		{"gradient_descent", (DL_FUNC) &gradient_descent, 37, gradient_descent_t},
+		{"viterbi", (DL_FUNC) &viterbi, 23, viterbi_t},
 		{NULL, NULL, 0}
 };
 

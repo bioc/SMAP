@@ -12,7 +12,7 @@ void gradient(int start, int T, int N, params *grad, params *hmm,
 			  int *start_overlaps, int dist, int L, int *distance);
 
 void prior_gradient(params *grad, params *hmm, int N, double *mean_ref,
-					double *sd_min, double *mean_sd);
+					double *sd_min, double *mean_sd, double **W_A, double *W_Pi);
 
 void normalize(params *grad, int N);
 
@@ -37,6 +37,6 @@ void gradient_descent(int *x_T, int *x_N, double *Pi, double *x_A,
 					  int *max_iters, int *inf_iters, double *x_tau,
 					  double *eta, double *e_change,
 					  double *e_same, double *e_min, double *e_max,
-					  int *adaptive, int *verbose);
+					  int *adaptive, int *verbose, double *x_W_A, double *W_Pi);
 
 #endif

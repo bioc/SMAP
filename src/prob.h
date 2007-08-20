@@ -37,14 +37,17 @@ double likelihood_prob(params *p, double *obs, int *Q, int N, int T, int overlap
 					   int *start_overlaps);
 
 double param_prior_prob(params *p, double *mean_ref, double sd_min, double mean_sd,
-						int N);
+						int N, double **W_A, double *W_Pi);
 
 double joint_posterior_prob(params *p, double *obs, int *Q, double *mean_ref,
 							int N, int T, double sd_min, double mean_sd,
 							int overlap, double *overlaps,
 							int *overlap_ids, int *no_overlaps,
 							int *start_overlaps, int *chrom_starts,
-							int *chroms, int dist, int L, int *distance);
+							int *chroms, int dist, int L, int *distance,
+							double **W_A, double *W_Pi);
+
+double Dirichlet(double *x, double *alpha, int N);
 
 double deriv_mu(double mu, double sigma, double obs);
 

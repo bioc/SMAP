@@ -183,8 +183,8 @@ setReplaceMethod(".grad", "SMAPHMM", function(x, value) {
 ######################################################
 
 setMethod(".viterbi", signature("SMAPHMM", "SMAPObservations"),
-          function(x, Obs, mean.ref, sd.min, mean.sd, overlap=TRUE,
-                   distance=TRUE, L=2000000)
+          function(x, Obs, mean.ref, sd.min, mean.sd, W.A, W.Pi,
+                   overlap=TRUE, distance=TRUE, L=2000000)
       {
 
           if (noObservations(Obs) == 0)
@@ -237,7 +237,9 @@ setMethod(".viterbi", signature("SMAPHMM", "SMAPObservations"),
                         as.double(mean.ref),                          # mean_ref
                         as.double(sd.min),                            # sd_min
                         as.double(mean.sd),                           # mean_sd
-                        as.integer(prior))
+                        as.integer(prior),
+                        as.double(W.A),
+                        as.double(W.Pi))
 
               P <- P + res$P
               Q <- c(Q, res$Q)
@@ -252,7 +254,7 @@ setMethod(".viterbi", signature("SMAPHMM", "SMAPObservations"),
 
 setMethod(".gradient.descent", signature("SMAPHMM", "SMAPObservations"),
           function(x, Obs, Q, P, mean.ref, sd.min, mean.sd,
-                   max.iters=Inf, tau=0.05,
+                   W.A, W.Pi, max.iters=Inf, tau=0.05,
                    eta=0.005, e.change=0.5, e.same=1.2,
                    e.min=0.0001, e.max=0.5, adaptive=TRUE,
                    overlap=TRUE, distance=TRUE, verbose=1,
@@ -323,7 +325,9 @@ setMethod(".gradient.descent", signature("SMAPHMM", "SMAPObservations"),
                     as.double(e.min),                               # e_min
                     as.double(e.max),                               # e_max
                     as.integer(adaptive),                           # adaptive
-                    as.integer(verbose))                            # verbose
+                    as.integer(verbose),                            # verbose
+                    as.double(W.A),
+                    as.double(W.Pi))
 
           A(x) <- matrix(res$A, ncol=no.states)
           .Z(x) <- matrix(res$Z, ncol=no.states)
@@ -392,6 +396,9 @@ setMethod("smap", signature("SMAPHMM", "SMAPObservations"),
 
               mean.ref <- Phi(x)[,1]
 
+              W.A <- A(x) / min(A(x))
+              W.Pi <- Pi(x) / min(Pi(x))
+
               for(i in 1:no.elem) {
 
                   hmm <- x
@@ -409,6 +416,7 @@ setMethod("smap", signature("SMAPHMM", "SMAPObservations"),
                       cat("**** running viterbi alg. ****\n")
 
                   res <- .viterbi(hmm, o, mean.ref, sd.min, mean.sd,
+                                  W.A=W.A, W.Pi=W.Pi,
                                   overlap=overlap, distance=distance, L=L)
 
                   Q <- res$Q
@@ -427,6 +435,7 @@ setMethod("smap", signature("SMAPHMM", "SMAPObservations"),
 
                       grad.res <- .gradient.descent(hmm, o, Q, P, mean.ref,
                                                     sd.min, mean.sd,
+                                                    W.A, W.Pi,
                                                     gd.max.iters,
                                                     tau, eta, e.change, e.same,
                                                     e.min, e.max, adaptive,
@@ -439,6 +448,7 @@ setMethod("smap", signature("SMAPHMM", "SMAPObservations"),
                           cat("**** running viterbi alg. ****\n")
 
                       res <- .viterbi(new.hmm, o, mean.ref, sd.min, mean.sd,
+                                      W.A=W.A, W.Pi=W.Pi,
                                       overlap=overlap, distance=distance, L=L)
 
                       if (res$P > P + tau) {

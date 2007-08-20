@@ -137,12 +137,19 @@ void gradient(int start_index, int T, int N, params *grad, params *hmm,
 }
 
 void prior_gradient(params *grad, params *hmm, int N, double *mean_ref,
-					double *sd_min, double *mean_sd) {
+					double *sd_min, double *mean_sd, double **W_A, double *W_Pi) {
 
 		int lower;
 		double mu_deriv_obs;
 		
 		for (int i = 0; i < N; i++) {
+
+				//A
+				for (int j = 0; j < N; j++)
+						grad->A[i][j] -= (W_A[i][j] - 1) / hmm->Z[i][j];
+
+				//Pi
+				grad->Pi[i] -= (W_Pi[i] - 1) / hmm->Y[i];
 				
 				lower = hmm->mu[i] < mean_ref[i];
 				
@@ -285,16 +292,14 @@ void gradient_descent(int *x_T, int *x_N, double *Pi, double *x_A,
 					  int *max_iters, int *inf_iters, double *x_tau,
 					  double *eta, double *e_change,
 					  double *e_same, double *e_min, double *e_max,
-					  int *adaptive, int *verbose) {
+					  int *adaptive, int *verbose, double *x_W_A, double *W_Pi) {
 		
 		int N = *x_N;
 		int T = *x_T;
 		double P = *x_P;
 		double tau = *x_tau;
-
-		int *lens = (int*) R_alloc(N, sizeof(int));
-		for (int i = 0; i < N; i++)
-				lens[i] = 0;
+		
+		double **W_A = (double**) R_alloc(N, sizeof(double*));
 		
 		params *grad_params = make_params(N,1,0);
 		params *work_grad_params = make_params(N,1,0);
@@ -304,9 +309,11 @@ void gradient_descent(int *x_T, int *x_N, double *Pi, double *x_A,
 
 		// Initialize A, Z, hmm_params
 		for (int i = 0; i < N; i++) {
+				W_A[i] = (double*) R_alloc(N, sizeof(double));
 				for (int j = 0, index = i; j < N; j++, index += N) {
 						hmm_params->A[i][j] = x_A[index];
 						hmm_params->Z[i][j] = x_Z[index];
+						W_A[i][j] = x_W_A[index];
 						eta_params->A[i][j] = *eta;
 				}
 				hmm_params->Y[i] = Y[i];
@@ -354,7 +361,8 @@ void gradient_descent(int *x_T, int *x_N, double *Pi, double *x_A,
 				}
 
 				// Calculate gradient for prior
-				prior_gradient(work_grad_params, work_hmm_params, N, mean_ref, sd_min, mean_sd);
+				prior_gradient(work_grad_params, work_hmm_params, N, mean_ref, sd_min, mean_sd,
+							   W_A, W_Pi);
 				
 				// Normalize gradient
 				normalize(work_grad_params, N);
@@ -373,7 +381,8 @@ void gradient_descent(int *x_T, int *x_N, double *Pi, double *x_A,
 				new_P = joint_posterior_prob(work_hmm_params, obs, Q, mean_ref, N, T,
 											 *sd_min, *mean_sd, *overlap,
 											 overlaps, overlap_ids, no_overlaps, start_overlaps,
-											 chrom_starts, chroms, *dist, *L, distance);
+											 chrom_starts, chroms, *dist, *L, distance,
+											 W_A, W_Pi);
 				
 				// Improvement?
 				if (new_P > P + tau) {
@@ -404,6 +413,7 @@ void gradient_descent(int *x_T, int *x_N, double *Pi, double *x_A,
 						iterator++;
 				}
 				Pi[i] = hmm_params->Pi[i];
+				Y[i] = hmm_params->Y[i];
 				mu[i] = hmm_params->mu[i];
 				sigma[i] = hmm_params->sigma[i];
 		}

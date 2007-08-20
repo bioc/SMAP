@@ -212,15 +212,37 @@ double likelihood_prob(params *p, double *obs, int *Q, int N, int T, int overlap
 }
 
 double param_prior_prob(params *p, double *mean_ref, double sd_min, double mean_sd,
-						int N) {
+						int N, double **W_A, double *W_Pi) {
 
 		double prob = 0.0;
 
-		for (int i = 0; i < N; i++)
+		for (int i = 0; i < N; i++) {
+				prob += safe_log(Dirichlet(p->A[i], W_A[i], N));
 				prob += safe_log(sd_min / p->sigma[i]) +
 						emission_prob(p->mu[i], mean_ref[i], mean_sd, 1);
+		}
+		prob += safe_log(Dirichlet(p->Pi, W_Pi, N));
 
 		return(prob);
+}
+
+double Dirichlet(double *x, double *alpha, int N) {
+
+		double p = 1.0;
+		double numer = 1.0;
+		double denom = 0.0;
+
+		for (int i = 0; i < N; i++) {
+
+				numer *= gammafn(alpha[i]);
+				denom += alpha[i];
+				p *= R_pow(x[i], alpha[i] - 1);
+		}
+		
+		denom = gammafn(denom);
+		p *= numer / denom;
+		
+		return(p);
 }
 
 double joint_posterior_prob(params *p, double *obs, int *Q, double *mean_ref,
@@ -228,12 +250,12 @@ double joint_posterior_prob(params *p, double *obs, int *Q, double *mean_ref,
 							int overlap, double *overlaps,
 							int *overlap_ids, int *no_overlaps,
 							int *start_overlaps, int *chrom_starts, int *chroms,
-							int dist, int L, int *distance) {
+							int dist, int L, int *distance, double **W_A, double *W_Pi) {
 
 		double prob = prior_prob(p, Q, N, T, chrom_starts, chroms, dist, L, distance);
 		prob += likelihood_prob(p, obs, Q, N, T, overlap, overlaps, overlap_ids,
 								no_overlaps, start_overlaps);
-		prob += param_prior_prob(p, mean_ref, sd_min, mean_sd, N);
+		prob += param_prior_prob(p, mean_ref, sd_min, mean_sd, N, W_A, W_Pi);
 		
 		return(prob);
 }

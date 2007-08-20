@@ -119,6 +119,7 @@ if (!isGeneric("getChromObs"))
 
 if (!isGeneric(".viterbi"))
     setGeneric(".viterbi", function(x, Obs, mean.ref, sd.min, mean.sd,
+                                    W.A, W.Pi,
                                     overlap=TRUE, distance=TRUE, L=2000000)
                standardGeneric(".viterbi"))
 
@@ -129,6 +130,7 @@ if (!isGeneric(".calc.overlaps"))
 if (!isGeneric(".gradient.descent"))
     setGeneric(".gradient.descent", function(x, Obs, Q, P, mean.ref,
                                              sd.min, mean.sd,
+                                             W.A, W.Pi,
                                              max.iters=Inf, tau=0.05,
                                              eta=0.005, e.change=0.5,
                                              e.same=1.2,
