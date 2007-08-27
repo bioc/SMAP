@@ -396,8 +396,8 @@ setMethod("smap", signature("SMAPHMM", "SMAPObservations"),
 
               mean.ref <- Phi(x)[,1]
 
-              W.A <- A(x) / min(A(x))
-              W.Pi <- Pi(x) / min(Pi(x))
+              W.A <- matrix(1, ncol=noStates(x), nrow=noStates(x))
+              W.Pi <- rep(1, noStates(x))
 
               for(i in 1:no.elem) {
 

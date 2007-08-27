@@ -90,7 +90,7 @@ void viterbi(int *x_T, int *x_N, double *x_A, double *x_Pi, double *mu, double *
 										if (no_olaps > 1) {
 												int q = j;
 												int iter = no_olaps-2;
-												for (int i = olap_ids[no_olaps-2]; i >= olap_ids[0]; i--) {
+												for (int i = t-1; i >= olap_ids[0]; i--) {
 														q = psi[i+1][q];
 														if (member(i, olap_ids, no_olaps)) {
 																qt[iter] = q;

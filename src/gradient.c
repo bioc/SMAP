@@ -6,7 +6,7 @@ void gradient(int start_index, int T, int N, params *grad, params *hmm,
 			  int *start_overlaps, int dist, int L, int *distance) {
 		
 		// Pi
-		grad->Pi[Q[0]] -= 1 / hmm->Y[Q[0]];
+		grad->Pi[Q[start_index]] -= 1 / hmm->Y[Q[start_index]];
 		
 		// A
 		if ((T - start_index) > 0) {
