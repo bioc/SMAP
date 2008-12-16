@@ -348,7 +348,7 @@ setMethod("plot", signature(x="SMAPObservations", y="missing"),
 
               args[["true.lengths"]] <- NULL
 
-              do.call("plot", args)
+              do.call(plot, args)
 
               if (true.lengths) {
                   value <- value(x)

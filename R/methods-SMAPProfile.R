@@ -231,7 +231,7 @@ setMethod("profilePlot", signature("SMAPProfile"), function(profile, ...) {
     draw.dists <- args[["draw.dists"]]
     args[["draw.dists"]] <- NULL
 
-    do.call("plot", args)
+    do.call(plot, args)
 
     if (true.lengths) {
         value <- value(Obs)
@@ -316,7 +316,7 @@ setMethod("profilePlot", signature("SMAPProfiles"), function(profile, ...) {
     args[["y"]] <- value(Obs)
     args[["col"]] <- Q
 
-    do.call("plot", args)
+    do.call(plot, args)
 
     if (mult.chroms) {
         abline(v=chrstart[2:no.chroms], col="grey", lty=2)
