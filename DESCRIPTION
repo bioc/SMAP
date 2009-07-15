@@ -18,4 +18,4 @@ Collate: AllClasses.R
          methods-GaussParam.R
 		 methods-grad.R
          methods-eta.R
-biocViews: Microarray, TwoChannel, DNACopyNumber
+biocViews: Microarray, TwoChannel, CopyNumberVariants
