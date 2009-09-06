@@ -1,14 +1,14 @@
 Package: SMAP
 Title: A Segmental Maximum A Posteriori Approach to Array-CGH Copy Number
        Profiling
-Version: 1.9.0
+Version: 1.9.1
 Date: 2007-08-27
 Depends: methods
 Author: Robin Andersson <robin.andersson@lcb.uu.se>
 Description: Functions and classes for DNA copy number profiling of array-CGH
              data
 Maintainer: Robin Andersson <robin.andersson@lcb.uu.se>
-License: GPL, version 2
+License: GPL-2
 LazyLoad: true
 Collate: AllClasses.R
          AllGenerics.R
