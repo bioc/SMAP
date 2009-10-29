@@ -17,7 +17,9 @@
 \section{Objects from the Class}{
   Objects can be created by calls of the form
   \code{new("SMAPObservations", value, chromosome, startPosition,
-	endPosition, name, reporterId)}.  You can also use the convenience
+	endPosition, name, reporterId)}. Values for internal slots
+  (see below) are not intended to be passed upon construction.
+  You can also use the convenience
   function \code{\link[SMAP:SMAPObservations]{SMAPObservations}}.
 }
 \section{Slots}{
@@ -36,6 +38,20 @@
 	  of the observation set.}
     \item{\code{noObservations}:}{Object of class \code{"numeric"} The
 	  number of observations in the set.}
+	\item{\code{chrom.start}:}{Object of class \code{"numeric"}.
+	  Internal slot.}
+	\item{\code{chroms}:}{Object of class \code{"character"}.
+	  Internal slot.}
+	\item{\code{distance}:}{Object of class \code{"numeric"}.
+	  Internal slot.}
+	\item{\code{noOverlaps}:}{Object of class \code{"numeric"}.
+	  Internal slot.}
+	\item{\code{overlaps}:}{Object of class \code{"numeric"}.
+	  Internal slot.}
+	\item{\code{overlapIds}:}{Object of class \code{"numeric"}.
+	  Internal slot.}
+	\item{\code{startOverlaps}:}{Object of class \code{"numeric"}.
+	  Internal slot.}
   }
 }
 \section{Methods}{

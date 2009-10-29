@@ -10,7 +10,7 @@
 \description{Holds parameters for a Hidden Markov Model (HMM) used in
   the \pkg{SMAP} package.}
 \section{Objects from the Class}{
-  Objects are not intended to be created directly but via the
+  Objects should not be created directly but via the
   constructor function \code{\link[SMAP:SMAPHMM]{SMAPHMM}}.
 }
 \section{Slots}{
@@ -25,6 +25,12 @@
 	  the second specifies means.}
     \item{\code{noStates}:}{Object of class \code{"numeric"} The number
 	  of hidden states in the HMM.}
+	\item{\code{Z}:}{Object of class \code{"matrix"} Matrix of
+	  transition probabilities.}
+	\item{\code{Y}:}{Object of class \code{"numeric"} Vector of
+	  initial probabilities.}
+	\item{\code{eta}:}{Object of class \code{"ANY"}. Internal slot.}
+	\item{\code{grad}:}{Object of class \code{"ANY"}. Internal slot.}
   }
 }
 \section{Methods}{
